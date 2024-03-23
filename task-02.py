@@ -1,122 +1,88 @@
-#TASK-02
-import math
-import random
-
-def print_board(board):
-    # Function to print the Tic-Tac-Toe board
-    for row in board:
-        print(" ".join(row))
+def print_board():
+    row1 = " | {} | {} | {} | ".format(board[0], board[1], board[2])
+    row2 = " | {} | {} | {} | ".format(board[3], board[4], board[5])
+    row3 = " | {} | {} | {} | ".format(board[6], board[7], board[8])
+    print()
+    print(row1)
+    print(row2)
+    print(row3)
     print()
 
-def is_winner(board, player):
-    # Function to check if a player has won by checking rows, columns, and diagonals
-    for i in range(3):
-        if all(board[i][j] == player for j in range(3)) or all(board[j][i] == player for j in range(3)):
+def player_move(icon, name):
+    print("Your turn, {} ({})".format(name, icon))
+    while True:
+        try:
+            choice = int(input("Enter your move (1-9): ").strip())
+            if 1 <= choice <= 9 and board[choice - 1] == " ":
+                board[choice - 1] = icon
+                break
+            else:
+                print("Invalid move. Please choose an empty cell (1-9).")
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+
+def is_victory(icon):
+    winning_combinations = [
+        [0,1,2],[3,4,5],[6,7,8],    # Rows
+        [0,3,6],[1,4,7],[2,5,8],    # Columns
+        [0,4,8],[2,4,6]             # Diagonals
+    ]
+    for combo in winning_combinations:
+        if all(board[i] == icon for i in combo):
             return True
-
-    if all(board[i][i] == player for i in range(3)) or all(board[i][2 - i] == player for i in range(3)):
-        return True
-
     return False
 
-def is_board_full(board):
-    # Function to check if the board is full, indicating a tie
-    return all(board[i][j] != ' ' for i in range(3) for j in range(3))
+def is_draw():
+    return " " not in board
 
-def evaluate(board):
-    # Function to evaluate the current state of the board (win, lose, or tie)
-    if is_winner(board, 'X'):
-        return 1
-    elif is_winner(board, 'O'):
-        return -1
-    elif is_board_full(board):
-        return 0
-    else:
-        return None
-
-def minimax(board, depth, maximizing_player):
-    # Minimax algorithm with Alpha-Beta Pruning for optimal move calculation
-    score = evaluate(board)
-
-    if score is not None:
-        return score
-
-    if maximizing_player:
-        max_eval = -math.inf
-        for i in range(3):
-            for j in range(3):
-                if board[i][j] == ' ':
-                    board[i][j] = 'X'
-                    eval = minimax(board, depth + 1, False)
-                    board[i][j] = ' '
-                    max_eval = max(max_eval, eval)
-        return max_eval
-    else:
-        min_eval = math.inf
-        for i in range(3):
-            for j in range(3):
-                if board[i][j] == ' ':
-                    board[i][j] = 'O'
-                    eval = minimax(board, depth + 1, True)
-                    board[i][j] = ' '
-                    min_eval = min(min_eval, eval)
-        return min_eval
-
-def find_best_move(board):
-    # Function to find the best move for the AI player (X) using the minimax algorithm
-    best_val = -math.inf
-    best_move = None
-
-    for i in range(3):
-        for j in range(3):
-            if board[i][j] == ' ':
-                board[i][j] = 'X'
-                move_val = minimax(board, 0, False)
-                board[i][j] = ' '
-
-                if move_val > best_val:
-                    best_move = (i, j)
-                    best_val = move_val
-
-    return best_move
+def play_again():
+    return input("Do you want to play again? (yes/no): ").lower().startswith('y')
 
 def play_tic_tac_toe():
-    # Main function to initiate and control the Tic-Tac-Toe game
-    board = [[' ' for _ in range(3)] for _ in range(3)]
-    current_player = 'X'
+    player1_score = 0
+    player2_score = 0
 
     while True:
-        print_board(board)
+        global board
+        board = [" " for _ in range(9)]
 
-        if current_player == 'X':
-            # AI (X) makes a move
-            row, col = find_best_move(board)
-            print("AI (X) plays at ({}, {})".format(row, col))
-        else:
-            # Human player (O) makes a move
-            while True:
-                try:
-                    row = int(input("Enter row (0, 1, or 2): "))
-                    col = int(input("Enter column (0, 1, or 2): "))
-                    if 0 <= row <= 2 and 0 <= col <= 2 and board[row][col] == ' ':
-                        break
-                    else:
-                        print("Invalid move. Try again.")
-                except ValueError:
-                    print("Invalid input. Enter a number.")
+        print("Welcome to Tic-Tac-Toe!")
+        player1_name = input("Enter Player 1's name: ")
+        player2_name = input("Enter Player 2's name: ")
+        player1_icon = input("Choose {}'s icon (X/O): ".format(player1_name)).upper()
+        player2_icon = 'X' if player1_icon.upper() == 'O' else 'O'
 
-        board[row][col] = current_player
+        print("{} will play with {} and {} will play with {}".format(player1_name, player1_icon, player2_name, player2_icon))
 
-        if is_winner(board, current_player):
-            print_board(board)
-            print("{} wins!".format(current_player))
+        while True:
+            print_board()
+            player_move(player1_icon, player1_name)
+            if is_victory(player1_icon):
+                print_board()
+                print("{} wins! Congratulations!!".format(player1_name))
+                player1_score += 1
+                break
+            elif is_draw():
+                print("It's a draw.")
+                break
+            print_board()
+            player_move(player2_icon, player2_name)
+            if is_victory(player2_icon):
+                print_board()
+                print("{} wins! Congratulations!!".format(player2_name))
+                player2_score += 1
+                break
+            elif is_draw():
+                print("It's a draw.")
+                break
+
+        print("Scores:")
+        print("{}: {}".format(player1_name, player1_score))
+        print("{}: {}".format(player2_name, player2_score))
+
+        if not play_again():
+            print("Thanks for playing!")
             break
-        elif is_board_full(board):
-            print_board(board)
-            print("It's a tie!")
-            break
 
-        current_player = 'O' if current_player == 'X' else 'X'
-
-if _name_ == "_main_":
+if __name__ == "__main__":
     play_tic_tac_toe()
