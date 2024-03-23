@@ -1,4 +1,6 @@
-def print_board():
+import random
+
+def print_board(board):
     row1 = " | {} | {} | {} | ".format(board[0], board[1], board[2])
     row2 = " | {} | {} | {} | ".format(board[3], board[4], board[5])
     row3 = " | {} | {} | {} | ".format(board[6], board[7], board[8])
@@ -8,7 +10,7 @@ def print_board():
     print(row3)
     print()
 
-def player_move(icon, name):
+def player_move(board, icon, name):
     print("Your turn, {} ({})".format(name, icon))
     while True:
         try:
@@ -21,7 +23,7 @@ def player_move(icon, name):
         except ValueError:
             print("Invalid input. Please enter a number.")
 
-def is_victory(icon):
+def is_victory(board, icon):
     winning_combinations = [
         [0,1,2],[3,4,5],[6,7,8],    # Rows
         [0,3,6],[1,4,7],[2,5,8],    # Columns
@@ -32,53 +34,106 @@ def is_victory(icon):
             return True
     return False
 
-def is_draw():
+def is_draw(board):
     return " " not in board
+
+def available_moves(board):
+    return [i for i in range(9) if board[i] == " "]
 
 def play_again():
     return input("Do you want to play again? (yes/no): ").lower().startswith('y')
 
-def play_tic_tac_toe():
-    player1_score = 0
-    player2_score = 0
+def minimax(board, depth, is_maximizing):
+    if is_victory(board, "X"):
+        return -10 + depth
+    elif is_victory(board, "O"):
+        return 10 - depth
+    elif is_draw(board):
+        return 0
 
+    if is_maximizing:
+        best_score = -float("inf")
+        for move in available_moves(board):
+            board[move] = "O"
+            score = minimax(board, depth + 1, False)
+            board[move] = " "
+            best_score = max(score, best_score)
+        return best_score
+    else:
+        best_score = float("inf")
+        for move in available_moves(board):
+            board[move] = "X"
+            score = minimax(board, depth + 1, True)
+            board[move] = " "
+            best_score = min(score, best_score)
+        return best_score
+
+def best_move(board):
+    best_score = -float("inf")
+    best_move = None
+    for move in available_moves(board):
+        board[move] = "O"
+        score = minimax(board, 0, False)
+        board[move] = " "
+        if score > best_score:
+            best_score = score
+            best_move = move
+    return best_move
+
+def play_tic_tac_toe():
     while True:
-        global board
         board = [" " for _ in range(9)]
 
         print("Welcome to Tic-Tac-Toe!")
-        player1_name = input("Enter Player 1's name: ")
-        player2_name = input("Enter Player 2's name: ")
-        player1_icon = input("Choose {}'s icon (X/O): ".format(player1_name)).upper()
-        player2_icon = 'X' if player1_icon.upper() == 'O' else 'O'
+        player_name = input("Enter your name: ")
+        player_icon = input("Choose your icon (X/O): ").upper()
+        ai_icon = 'X' if player_icon == 'O' else 'O'
 
-        print("{} will play with {} and {} will play with {}".format(player1_name, player1_icon, player2_name, player2_icon))
+        print("{} will play with {} and AI will play with {}".format(player_name, player_icon, ai_icon))
 
         while True:
-            print_board()
-            player_move(player1_icon, player1_name)
-            if is_victory(player1_icon):
-                print_board()
-                print("{} wins! Congratulations!!".format(player1_name))
-                player1_score += 1
-                break
-            elif is_draw():
-                print("It's a draw.")
-                break
-            print_board()
-            player_move(player2_icon, player2_name)
-            if is_victory(player2_icon):
-                print_board()
-                print("{} wins! Congratulations!!".format(player2_name))
-                player2_score += 1
-                break
-            elif is_draw():
-                print("It's a draw.")
-                break
-
-        print("Scores:")
-        print("{}: {}".format(player1_name, player1_score))
-        print("{}: {}".format(player2_name, player2_score))
+            print_board(board)
+            if player_icon == 'X':
+                player_move(board, player_icon, player_name)
+                if is_victory(board, player_icon):
+                    print_board(board)
+                    print("Congratulations, {} wins!".format(player_name))
+                    break
+                elif is_draw(board):
+                    print_board(board)
+                    print("It's a draw.")
+                    break
+                move = best_move(board)
+                board[move] = ai_icon
+                if is_victory(board, ai_icon):
+                    print_board(board)
+                    print("AI wins!")
+                    break
+                elif is_draw(board):
+                    print_board(board)
+                    print("It's a draw.")
+                    break
+            else:
+                move = best_move(board)
+                board[move] = ai_icon
+                if is_victory(board, ai_icon):
+                    print_board(board)
+                    print("AI wins!")
+                    break
+                elif is_draw(board):
+                    print_board(board)
+                    print("It's a draw.")
+                    break
+                print_board(board)
+                player_move(board, player_icon, player_name)
+                if is_victory(board, player_icon):
+                    print_board(board)
+                    print("Congratulations, {} wins!".format(player_name))
+                    break
+                elif is_draw(board):
+                    print_board(board)
+                    print("It's a draw.")
+                    break
 
         if not play_again():
             print("Thanks for playing!")
